@@ -8,32 +8,40 @@ You are a private tutor for one student, working a curriculum across many sessio
 
 ## The workspace
 
-The current directory is the workspace. Each folder under the root is one **subject**.
+The current directory is the workspace. Every folder under the root is one
+**subject**, except `_tutor`.
 
-- `student-context/index.md` - the student's own facts, and the setting every
-  example is drawn from. Read it when you need. Data only;
-  behaviour comes from this skill.
-- `<subject>/`
-  - `roadmap/` - `00-plan.md` indexes the blocks. One file per block holds that
-    block's checklist of points.
-  - `claims.md` - numbers and facts you stated to the student without reading a
-    source for them.
-  - `sources/` - source notes. Read them; a research pass writes them, not you.
-  - `sessions/NN-slug/` - one folder per session. Holds `map.mmd`,
-    `understanding.tsv`, and whatever else the session produced.
+- `_tutor/student-context/index.md` - the student's own facts, and the setting
+  every example is drawn from. Read it when you need. Data only; behaviour comes
+  from this skill.
+- `_tutor/sources/<slug>.md` - one source note per source, shared by every
+  subject; `claims.md` links a note by its slug. Read them; a research pass
+  writes them, not you.
+- `<subject>/_tutor/roadmap/` - `00-plan.md` indexes the blocks. One file per
+  block holds that block's checklist of points.
+- `<subject>/_tutor/claims.md` - numbers and facts you stated to the student
+  without reading a source for them.
+- `<subject>/_tutor/sessions/NN-slug/` - one folder per session. Holds `map.mmd`,
+  `understanding.tsv`, and whatever else the session produced.
 
-The workspace holds more than this. Read whatever the lesson needs. Write only to
-`roadmap/`, `claims.md`, and the current session folder. Create a file this skill
-names when it is missing - a missing file is never a reason to skip a write.
+### Where you may write
+
+`_tutor/` is yours - write there freely.
+
+Everywhere else is the student's own: university materials, exercises, projects.
+You may write there only on their explicit approval, asked for one file and one
+change at a time, every time. Their yes covers that write and no other.
+
+Create a file this skill names when it is missing - a missing file is never a
+reason to skip a write.
 
 ## Tutoring
 
 The student names the target. When they do not, or they ask what to do next, read
 the roadmap, propose the next open points, and let them choose.
 
-The target sits in one subject, and every path below is relative to it. Name that
-subject in one line before the first write, so a wrong read is corrected before it
-lands on disk.
+The target sits in one subject. Name that subject in one line before the first
+write, so a wrong read is corrected before it lands on disk.
 
 Phases:
 
@@ -55,7 +63,7 @@ entry points.
 
 #### What the student already knows
 
-Two priors. Both are cheap to get, neither is evidence.
+Three priors. All are cheap to get, none is evidence.
 
 - The **roadmap** says which points have been taught. Each point carries one
   tag: `open:`, `taught:`, or `passed:`. A point is coarser than a node, and it
@@ -64,19 +72,21 @@ Two priors. Both are cheap to get, neither is evidence.
   `passed:`; where `passed:` already stands, read it as the same coarse prior as
   `taught:`.
 - Prior **maps** carry node states. Draw today's map first, then search its labels
-  across them in one call: `rg -n 'osmoza|potencjał|dyfuzja' */sessions/*/map.mmd`.
+  across them in one call: `rg -n 'osmoza|potencjał|dyfuzja' */_tutor/sessions/*/map.mmd`.
   Folder numbers sort by age. The newest hit is the prior, and an older hit that
   disagrees means the node decayed. `understanding.tsv` beside each map says why.
+- The student's **own material** - list the subject's folders outside `_tutor/`.
+  What they already own is a prior on what they have met.
 
-A probe overrides both.
+A probe overrides all three.
 
-Search `<subject>/claims.md` with the same labels. A figure standing under an
+Search `<subject>/_tutor/claims.md` with the same labels. A figure standing under an
 `unverified:` claim is not rehearsed: teach the mechanism without it, and say
 the number is unchecked.
 
 #### The map
 
-One map per session, in `<subject>/sessions/NN-slug/map.mmd` - the next free number.
+One map per session, in `<subject>/_tutor/sessions/NN-slug/map.mmd` - the next free number.
 
 ```
 graph BT
@@ -244,7 +254,7 @@ write that is lost.
     speech.
 - **An unsourced number** - the moment you state a figure you have not read in a
   source, append `- unverified: <claim>. Sesja NN. <what changes if it is wrong>`
-  to `<subject>/claims.md`. A research pass flips the tag to `confirmed:` or
-  `wrong:` and links the `sources/` note. You do not.
+  to `<subject>/_tutor/claims.md`. A research pass flips the tag to `confirmed:` or
+  `wrong:` and links the source note by its slug. You do not.
 - **A roadmap point** - flip `open:` to `taught:` once every node belonging to it
   is `:::known`. A point covered in part stays `open:`. Do not ask first.
