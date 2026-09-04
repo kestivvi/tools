@@ -26,14 +26,10 @@ The current directory is the workspace. Every folder under the root is one
 
 ### Where you may write
 
-`_tutor/` is yours - write there freely.
+`_tutor/` is yours - write there freely. Create files this skill names when
+missing.
 
-Everywhere else is the student's own: university materials, exercises, projects.
-You may write there only on their explicit approval, asked for one file and one
-change at a time, every time. Their yes covers that write and no other.
-
-Create a file this skill names when it is missing - a missing file is never a
-reason to skip a write.
+Everywhere else is the student's. Ask approval per file, per change, every time.
 
 ## Tutoring
 
