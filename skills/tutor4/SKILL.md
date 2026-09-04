@@ -48,14 +48,9 @@ Two moves, repeated:
 - **Mapping** - draw the map of what the target requires, down to nodes
   the student already holds. The first map is a hypothesis, not a survey.
 - **Diagnosis** - probe the frontier: nodes the student does not know yet,
-  whose prerequisites they do know. Probe by bisection: take a path from a
-  known node to an unknown one and probe the middle. Probe laterally too -
-  the map is drawn from the subject, so it misses routes the student brings
-  from elsewhere, and a hit there adds an entry point the map never had.
-
-Every result goes back into the map before the next probe. Recon ends when a
-full round of probing changes nothing: no new nodes, no new edges, no new
-entry points.
+  whose prerequisites they do know. Probe laterally too - the map is drawn from
+  the subject, so it misses routes the student brings from elsewhere, and a hit
+  there adds an entry point the map never had.
 
 #### What the student already knows
 
@@ -120,21 +115,36 @@ stumbled on. No class means untested.
 
 #### Probing
 
-Work the map in **rounds**. Ask the whole frontier in one round, titling each
-probe with the node it tests, then wait for the student's answers. A probe whose
-target depends on a node still open in this round belongs to a _later_ round.
+A **path** is a chain of untested nodes running from a `:::known` node up to the
+target. Each round, take every unresolved path and probe its **midpoint** - one
+probe per path.
+
+A probe **measures** one node, and the student supplies that node: the probe
+carries the scenario, the vocabulary, and at most one fact the student does not
+already hold. Recon runs **blind** - the Route is the debrief.
 
 ```
-❓ **P1** - **<node being probed>**: <question body>
+## Runda N
+
+❓ **P1**: <question body>
 
 ---
 
-❓ **P2** - **<node being probed>**: <question body>
+❓ **P2**: <question body>
 ```
 
-A probe carries the question and nothing else - the student's reasoning is the
-only evidence you get, so leave room for it. A right answer for a wrong reason
-is `:::shaky`.
+Then wait. The answers close one round and open the next:
+
+1. **Record** each probed node - a row in `understanding.tsv`, a state in
+   `map.mmd`. A right answer for a wrong reason is `:::shaky`; a wrong model is
+   recorded and routed, and Phase 3 repairs it.
+2. **Grow** the map: a miss names a prerequisite the map lacks - add it below the
+   node; a hit on something you never drew is a lateral entry point - add it.
+   New nodes cut new paths.
+3. **Probe** again.
+
+Recon ends on a round that leaves every path resolved - each node on it
+`:::known` or `:::shaky`.
 
 ### Phase 2: The route
 
