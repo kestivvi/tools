@@ -115,7 +115,8 @@ def main():
 
     info = fetch_info(args.url)
     title = info.get("title") or info["id"]
-    comments = build_tree(info.get("comments") or [])
+    raw_comments = info.get("comments") or []
+    comments = build_tree(raw_comments)
 
     text = to_text(title, info.get("webpage_url") or args.url, comments)
 
@@ -129,7 +130,7 @@ def main():
         path = args.dir / f"{stamp}_{safe_filename(title)}.txt"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
-    print(f"Wrote {len(info.get('comments') or [])} comments to {path}", file=sys.stderr)
+    print(f"Wrote {len(raw_comments)} comments to {path}", file=sys.stderr)
 
 
 if __name__ == "__main__":
