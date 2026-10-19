@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download all comments of a YouTube video and write them to comments/<datetime>_<title>.txt.
+"""Download all comments of a YouTube video and write them to ./<datetime>_<title>.txt.
 
 Each comment is one line, `author: content`. Replies are indented below their parent.
 """
@@ -13,7 +13,6 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-OUTPUT_DIR = Path("comments")
 INDENT = "  "
 # Matches yt-dlp lines like "Downloading comment API JSON page 3 (60/~41171)".
 PROGRESS_RE = re.compile(r"\((\d+)/~(\d+)\)")
@@ -103,16 +102,33 @@ def safe_filename(title):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("url", help="URL or ID of the YouTube video")
+    target = parser.add_mutually_exclusive_group()
+    target.add_argument(
+        "-d", "--dir", type=Path, default=Path("."),
+        help="directory for the auto-named output file (default: current directory)",
+    )
+    target.add_argument(
+        "-o", "--output", type=Path,
+        help="exact output file path; use '-' to write to stdout",
+    )
     args = parser.parse_args()
 
     info = fetch_info(args.url)
     title = info.get("title") or info["id"]
     comments = build_tree(info.get("comments") or [])
 
-    stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    path = OUTPUT_DIR / f"{stamp}_{safe_filename(title)}.txt"
+    text = to_text(title, info.get("webpage_url") or args.url, comments)
+
+    if args.output == Path("-"):
+        sys.stdout.write(text)
+        return
+    if args.output:
+        path = args.output
+    else:
+        stamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        path = args.dir / f"{stamp}_{safe_filename(title)}.txt"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(to_text(title, info.get("webpage_url") or args.url, comments), encoding="utf-8")
+    path.write_text(text, encoding="utf-8")
     print(f"Wrote {len(info.get('comments') or [])} comments to {path}", file=sys.stderr)
 
 
