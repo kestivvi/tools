@@ -1,11 +1,17 @@
-# kestivvi-skills
+# kestivvi-tools
 
-Agent skills, installable with the [`skills`](https://skills.sh) CLI.
+My tools:
+
+- `skills/`: agent skills, installable with the [`skills`](https://skills.sh) CLI.
+- `scripts/`: Python scripts. `yt_comments.py` downloads all comments of a YouTube video (needs `yt-dlp` and `node`).
+- `claude-code/`: Claude Code config. `statusline.sh` shows model, tokens and rate limits.
+
+## Skills
 
 ```bash
-npx skills add kestivvi/skills --list          # see what's here
-npx skills add kestivvi/skills --skill tutor4
-npx skills add kestivvi/skills --all -a claude-code
+npx skills add kestivvi/tools --list          # see what's here
+npx skills add kestivvi/tools --skill tutor4
+npx skills add kestivvi/tools --all -a claude-code
 ```
 
 ## Local development
@@ -22,4 +28,15 @@ To unlink, remove only the symlink. Do not use `-r` or a trailing slash, because
 
 ```bash
 rm ~/.claude/skills/tutor4
+```
+
+## Status line
+
+In `~/.claude/settings.json`:
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "bash /path/to/kestivvi-tools/claude-code/statusline.sh"
+}
 ```
