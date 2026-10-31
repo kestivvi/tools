@@ -1,53 +1,60 @@
 #!/usr/bin/env bash
-# Claude Code status line: model, tokens, 5h and 7d rate limits with reset times.
+# Claude Code status line: model, tokens, 5h and 7d rate limits with reset times and pace.
+
+# format_duration <seconds>: prints "Xd Yh", "Xh Ym" or "Ym".
+format_duration() {
+  local days=$(($1 / 86400)) hours=$(($1 % 86400 / 3600)) minutes=$(($1 % 3600 / 60))
+  if [ "$days" -gt 0 ]; then
+    echo "${days}d ${hours}h"
+  elif [ "$hours" -gt 0 ]; then
+    echo "${hours}h ${minutes}m"
+  else
+    echo "${minutes}m"
+  fi
+}
+
+# pace <used_pct> <resets_at> <window_seconds>
+# Prints the difference between real usage and linear (even) usage, as % and as time.
+# Negative = behind the linear pace (budget left, green). Positive = ahead (red).
+pace() {
+  local color sign percent seconds
+  read -r color sign percent seconds < <(
+    awk -v used="$1" -v resets="$2" -v win="$3" -v now="$(date +%s)" 'BEGIN{
+      elapsed = win - (resets - now)
+      if (elapsed < 0) elapsed = 0
+      if (elapsed > win) elapsed = win
+      delta = used - elapsed / win * 100
+      behind = delta < 0
+      if (behind) delta = -delta
+      printf "%s %s %.0f %d\n", (behind ? "32" : "1;91"), (behind ? "-" : "+"), delta, int(delta / 100 * win / 60) * 60
+    }'
+  )
+  printf '\033[%sm%s%s%% %s%s\033[0m' "$color" "$sign" "$percent" "$sign" "$(format_duration "$seconds")"
+}
+
+# add_window <label> <rate_limits_key> <window_seconds>
+# Appends one "|"-separated block for a rate limit window. Parts without data are left out.
+add_window() {
+  local used resets remaining block=""
+  used=$(echo "$input" | jq -r ".rate_limits.$2.used_percentage // empty")
+  resets=$(echo "$input" | jq -r ".rate_limits.$2.resets_at // empty")
+  [ -n "$used" ] && block=$(printf '%.0f%% %s' "$used" "$1")
+  if [ -n "$resets" ]; then
+    remaining=$((resets - $(date +%s)))
+    [ "$remaining" -lt 0 ] && remaining=0
+    block="$block${block:+ }↻ $(format_duration "$remaining")"
+  fi
+  [ -n "$used" ] && [ -n "$resets" ] && block="$block $(pace "$used" "$resets" "$3")"
+  [ -n "$block" ] && out="$out | $block"
+}
+
 input=$(cat)
 model=$(echo "$input" | jq -r '.model.display_name')
 effort=$(echo "$input" | jq -r '.effort.level // empty')
 [ -n "$effort" ] && model="$model $effort"
-it=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
-ot=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
-total=$((it+ot))
-tfmt=$(awk -v n="$total" 'BEGIN{ if (n<1000) printf "%d", n
-else printf "%.1fK", n/1000 }')
-tokens=$(printf '\033[1;33m%s\033[0m' "$tfmt")
-pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-resets=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
-wpct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-wresets=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
-ratestr=""
-[ -n "$pct" ] && ratestr=$(printf '%.0f%% 5h' "$pct")
-resetstr=""
-if [ -n "$resets" ]
-then now=$(date +%s)
-diff=$((resets-now))
-[ "$diff" -lt 0 ] && diff=0
-h=$((diff/3600))
-m=$(((diff%3600)/60))
-if [ "$h" -gt 0 ]
-then resetstr="↻ ${h}h ${m}m"
-else resetstr="↻ ${m}m"
-fi
-fi
-wratestr=""
-[ -n "$wpct" ] && wratestr=$(printf '%.0f%% 7d' "$wpct")
-wresetstr=""
-if [ -n "$wresets" ]
-then now=$(date +%s)
-diff=$((wresets-now))
-[ "$diff" -lt 0 ] && diff=0
-d=$((diff/86400))
-h=$(((diff%86400)/3600))
-m=$(((diff%3600)/60))
-if [ "$d" -gt 0 ]
-then wresetstr="↻ ${d}d ${h}h"
-elif [ "$h" -gt 0 ]
-then wresetstr="↻ ${h}h ${m}m"
-else wresetstr="↻ ${m}m"
-fi
-fi
-out="$model | $tokens"
-[ -n "$ratestr" ] && out="$out | $ratestr"
-[ -n "$resetstr" ] && out="$out | $resetstr"
-[ -n "$wratestr" ] && out="$out | $wratestr"
-[ -n "$wresetstr" ] && out="$out | $wresetstr"
+total_tokens=$(echo "$input" | jq -r '(.context_window.total_input_tokens // 0) + (.context_window.total_output_tokens // 0)')
+tokens=$(awk -v n="$total_tokens" 'BEGIN{ if (n<1000) printf "%d", n; else printf "%.1fK", n/1000 }')
+out=$(printf '%s | \033[1;33m%s\033[0m' "$model" "$tokens")
+add_window 5h five_hour 18000
+add_window 7d seven_day 604800
 printf '%s\n' "$out"
