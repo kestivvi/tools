@@ -48,7 +48,7 @@ add_window() {
   if [ -n "$resets" ]; then
     remaining=$((resets - $(date +%s)))
     [ "$remaining" -lt 0 ] && remaining=0
-    block="$block ↻$(format_duration "$remaining")"
+    block="$block ↻ $(format_duration "$remaining")"
   fi
   out="$out │ $block"
 }
